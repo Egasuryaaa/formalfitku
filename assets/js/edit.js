@@ -258,113 +258,29 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Anda harus mengupload gambar terlebih dahulu!');
             return;
         }
-        console.log("Starting download process");
-        console.log("Image state:", imageState);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = userImage.naturalWidth;
-        canvas.height = userImage.naturalHeight;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const userImg = new Image();
-        userImg.crossOrigin = 'Anonymous';
-        userImg.src = userImage.src;
-        userImg.onload = function() {
-            const xPos = (canvas.width * (imageState.horizontalPosition - 50) / 50) / 2;
-            const yPos = (canvas.height * (imageState.verticalPosition - 50) / 50) / 2;
-            const scale = 0.5 + (imageState.zoom / 100);
-            ctx.save();
-            ctx.translate(canvas.width/2 + xPos, canvas.height/2 + yPos);
-            ctx.scale(scale, scale);
-            ctx.translate(-userImg.width/2, -userImg.height/2);
-            ctx.drawImage(userImg, 0, 0);
-            ctx.restore();
-            // Draw frame on canvas if selected
-            if (imageState.outerType !== 'none') {
-                if (customFrameUploaded && imageState.outerType === 'custom') {
-                    if (customFrameImage && customFrameImage.complete) {
-                        console.log("Using custom uploaded frame for canvas");
-                        drawFrameAndDownload(customFrameImage);
-                    } else {
-                        console.error("Custom frame not ready or not found");
-                        alert('Frame kustom tidak tersedia. Silakan upload ulang.');
-                        downloadCanvasImage(canvas);
-                    }
-                } else {
-                    if (frameImages[imageState.outerType] && frameImages[imageState.outerType].complete) {
-                        console.log("Using preloaded frame for canvas:", imageState.outerType);
-                        drawFrameAndDownload(frameImages[imageState.outerType]);
-                    } else {
-                        console.log("Preloaded frame not ready, loading again:", imageState.outerType);
-                        const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                        const frameSrc = basePath + frames[imageState.outerType].src;
-                        const frameImg = new Image();
-                        frameImg.crossOrigin = 'Anonymous';
-                        frameImg.src = frameSrc;
-                        frameImg.onload = function() {
-                            drawFrameAndDownload(frameImg);
-                        };
-                        frameImg.onerror = function() {
-                            console.error("Failed to load frame for canvas:", frameSrc);
-                            alert('Gagal memuat frame. Silakan coba lagi atau pilih frame lain.');
-                            downloadCanvasImage(canvas);
-                        };
-                    }
-                }
-            } else {
-                downloadCanvasImage(canvas);
+        html2canvas(imageUploadBox).then(canvas => {
+            try {
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'edited-image-' + new Date().getTime() + '.png';
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(dataURL);
+                }, 100);
+            } catch (e) {
+                console.error("Download gagal:", e);
+                alert('Gagal mendownload gambar. Silakan coba lagi.');
             }
-            function drawFrameAndDownload(frameImg) {
-                try {
-                    let frameWidth, frameHeight;
-                    const frameAspectRatio = frameImg.width / frameImg.height;
-                    const canvasAspectRatio = canvas.width / canvas.height;
-                    if (frameAspectRatio > canvasAspectRatio) {
-                        frameWidth = canvas.width;
-                        frameHeight = frameWidth / frameAspectRatio;
-                    } else {
-                        frameHeight = canvas.height;
-                        frameWidth = frameHeight * frameAspectRatio;
-                    }
-                    const frameScale = 0.5 + (imageState.outerZoom / 100);
-                    frameWidth *= frameScale;
-                    frameHeight *= frameScale;
-                    const frameXPos = (canvas.width * (imageState.outerHorizontalPosition - 50) / 50) / 2;
-                    const frameYPos = (canvas.height * (imageState.outerVerticalPosition - 50) / 50) / 2;
-                    ctx.save();
-                    ctx.translate(canvas.width/2 + frameXPos, canvas.height/2 + frameYPos);
-                    ctx.drawImage(frameImg, -frameWidth/2, -frameHeight/2, frameWidth, frameHeight);
-                    ctx.restore();
-                    console.log("Frame drawn successfully with dimensions:", frameWidth, frameHeight);
-                } catch (e) {
-                    console.error("Error drawing frame:", e);
-                }
-                downloadCanvasImage(canvas);
-            }
-        };
-        userImg.onerror = function() {
-            console.error("Failed to load user image for canvas");
-            alert('Gagal memproses gambar. Silakan coba lagi.');
-        };
+        }).catch(error => {
+            console.error("html2canvas error:", error);
+            alert('Gagal menangkap tampilan. Silakan coba lagi.');
+        });
     });
-    function downloadCanvasImage(canvas) {
-        try {
-            const dataURL = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = 'edited-image-' + new Date().getTime() + '.png';
-            link.href = dataURL;
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(dataURL);
-            }, 100);
-        } catch (e) {
-            console.error("Download failed:", e);
-            alert('Gagal mendownload gambar. Silakan coba lagi.');
-        }
-    }
-
+    
+    
     // === Initialize slider controls ===
     function initializeSliders() {
         const sliders = document.querySelectorAll('.slider');
