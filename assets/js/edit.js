@@ -33,7 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
         frame1: { src: 'assets/images/Jas 11.png', name: 'Jas 1' },
         frame2: { src: 'assets/images/Jas 13.png', name: 'Jas 2' },
         frame3: { src: 'assets/images/Model Jas 6.png', name: 'Jas 3' },
-        frame4: { src: 'assets/images/Model Jas 29.png', name: 'Jas 4' }
+        frame4: { src: 'assets/images/Model Jas 29.png', name: 'Jas 4' },
+        frame5: { src: 'assets/images/jaslab.png', name: 'Jas lab' },
+
     };
 
     // === Upload frame (custom) ===
